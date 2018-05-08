@@ -19,7 +19,7 @@ try:
 except Exception as error:
     print(error)
 
-out_file = open("bangalore_restaurant_details.txt", "ab")
+out_file = open("chandigarh_restaurant_details_2.txt", "wb")
 
 
 class ZomatoRestaurantLinkGen:
@@ -39,7 +39,7 @@ class ZomatoRestaurantLinkGen:
 
         self.soup = None
         if self.html_text is not None:
-            self.soup = BeautifulSoup(self.html_text, 'lxml')
+            self.soup = BeautifulSoup(self.html_text)
 
     def scrap(self):
         soup = self.soup
@@ -52,9 +52,9 @@ if __name__ == '__main__':
         print("Selenium not opened")
         sys.exit()
 
-    for x in range(1, 564):
+    for x in range(1, 136):
         print(str(x) + '\n')
-        zr = ZomatoRestaurantLinkGen('https://www.zomato.com/bangalore/restaurants?page={}'.format(x))
+        zr = ZomatoRestaurantLinkGen('https://www.zomato.com/chandigarh/restaurants?page={}'.format(x))
         zr.scrap()
     browser.close()
     out_file.close()

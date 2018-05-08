@@ -1,3 +1,9 @@
+
+zomato_chandigarh*.json
+chandigarh*.txt
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

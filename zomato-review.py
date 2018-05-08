@@ -9,9 +9,11 @@ from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 import urllib.request
 from selenium import webdriver
+from selenium.common.exceptions import *  
 from bs4 import NavigableString
 import sys
 import json
+import time
 
 browser = None
 try:
@@ -23,7 +25,7 @@ except Exception as error:
 class ZomatoRestaurant:
     def __init__(self, url):
         self.url = url
-        # print("opening")
+        print("opening")
         self.html_text = None
         try:
             browser.get(self.url)
@@ -39,6 +41,78 @@ class ZomatoRestaurant:
         self.soup = None
         if self.html_text is not None:
             self.soup = BeautifulSoup(self.html_text)
+
+
+
+
+    def load_all_reviews(self):
+        
+        browser.implicitly_wait(7);
+        elem = browser.find_element_by_class_name('load-more')
+        
+        while(elem.is_displayed()):
+            print(elem.text);
+            elem.click()
+            browser.implicitly_wait(4)
+
+            try:
+                elem = browser.find_element_by_class_name('load-more')            
+            except NoSuchElementException:
+                print("No element found")
+                break;
+
+            
+    
+
+    def get_reviews(self):
+        try:
+            browser.get(self.url+'/reviews')
+            self.review_html_text = browser.page_source 
+        except Exception as err:
+            print(str(err))
+            return
+
+        self.reviewSoup = BeautifulSoup(self.review_html_text)
+        link = browser.find_element_by_xpath("//a[@data-sort='reviews-dd']");
+        print("waaiting 15 s")
+        time.sleep(15)
+        # link.click();
+        # action = webdriver.common.action_chains.ActionChains(browser)
+        # action.move_to_element(link)
+        # action.perform()
+
+        print("clicking all review btn " + link.text);
+        link.click()
+
+        self.load_all_reviews();
+
+
+        new_source = browser.execute_script("return document.body.innerHTML")
+        print(new_source)
+        new_soup = BeautifulSoup(new_source)
+
+        reviews_body = new_soup.find_all('div' , attrs =  {"class" : "res-review-body"})
+        reviews = [];
+        for review_body in reviews_body:
+            review = dict()
+            review_text = review_body.find('div' , attrs = {"class" : "rev-text"}).text.strip()
+            review_author = review_body.find('div' , attrs = {"class" : "header"}).text.strip()
+            review_date = review_body.find('time').text.strip()
+
+            review_text = " ".join(review_text.split()[1:])
+            review_author = " ".join(review_author.split())
+
+            review['text'] = review_text;
+            review['author'] = review_author;
+            review['date'] = review_date;
+
+            reviews.append(review);
+            print(review);
+
+        return reviews;
+
+
+    
 
     def scrap(self):
         if self.soup is None:
@@ -133,14 +207,18 @@ class ZomatoRestaurant:
             child_div = div.find("div", attrs={'class': 'grey-text'})
             if child_div:
                 rest_details['what_people_love_here'].append(child_div.get_text())
+
+
+        rest_details['reviews'] = self.get_reviews()
+
         return rest_details
 
 
 if __name__ == '__main__':
     if browser is None:
         sys.exit()
-    out_file = open("zomato_chandigarh.json", "a")
-    with open('chandigarh_restaurant_details.txt', 'r', encoding="utf-8") as f:
+    out_file = open("zomato_chandigarh_2.json", "a")
+    with open('chandigarh_restaurant_details_2.txt', 'r', encoding="utf-8") as f:
         for line in f:
             zr = ZomatoRestaurant(line)
             json.dump(zr.scrap(), out_file)
